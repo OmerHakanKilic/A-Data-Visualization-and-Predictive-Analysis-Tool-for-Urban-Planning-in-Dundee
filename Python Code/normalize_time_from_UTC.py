@@ -18,3 +18,5 @@ target_file_df["TimeZone"] = local_dates.dt.strftime("%Z")
 target_file_df.drop(columns=["Date", "FID"], inplace=True)
 
 print(target_file_df)
+
+target_file_df.to_csv("../Data/Processed/02_Time_Zone_Fixed.csv", index=False)
