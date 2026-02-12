@@ -22,5 +22,7 @@ hour_split = df["Hour"].str.split("-", expand=True)
 df["Starting time"] = hour_split[0].apply(convert_to_24h)
 df["Finishing time"] = hour_split[1].apply(convert_to_24h)
 
+df.drop(columns=["Hour"], inplace=True)
+
 # 3. Save the processed data
 df.to_csv("../Data/Processed/03_Processed_Time_Data.csv", index=False)
