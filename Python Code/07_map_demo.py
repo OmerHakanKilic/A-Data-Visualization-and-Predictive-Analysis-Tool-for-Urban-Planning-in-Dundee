@@ -1,6 +1,7 @@
 import sys
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -106,13 +107,18 @@ class MapPage(QWidget):
         camerasContainer.addWidget(self.checkbox_332)
         camerasContainer.addWidget(self.checkbox_500)
 
+        # Embedded map
+        self.browser = QWebEngineView()
+        map_url = "https://uod.maps.arcgis.com/apps/mapviewer/index.html?webmap=c697947abbf441159a34e08b1f8d31e5"
+        self.browser.setUrl(QUrl(map_url))
+
         mapTopBar.addWidget(dayDropMenu)
         mapTopBar.addWidget(seasonDropMenu)
         mapTopBar.addLayout(startTimeContainer)
         mapTopBar.addLayout(finishTimeContainer)
         layout.addLayout(mapTopBar)
         layout.addLayout(camerasContainer)
-        layout.addWidget(QLabel("Map Page"))
+        layout.addWidget(self.browser)
         self.setLayout(layout)
 
 
