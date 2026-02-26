@@ -75,6 +75,7 @@ def generate_overview_map(output_path: Path, figsize: tuple = (12, 8), dpi: int 
     # Set bounds in Web Mercator
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(y_min, y_max)
+    ax.set_aspect("equal")
 
     # Add OpenStreetMap basemap (top-down view)
     try:
@@ -89,7 +90,7 @@ def generate_overview_map(output_path: Path, figsize: tuple = (12, 8), dpi: int 
         print(f"  Warning: Could not fetch tiles: {e}")
         ax.set_facecolor("#e5e5e5")
 
-    # Add camera markers (convert to Mercator)
+    # Add camera markers (convert to Mercator) – no labels
     for camera_name, (lat, lon) in CAMERA_LOCATIONS.items():
         x, y = lat_lon_to_mercator(lat, lon)
         ax.scatter(
@@ -101,24 +102,9 @@ def generate_overview_map(output_path: Path, figsize: tuple = (12, 8), dpi: int 
             linewidths=2,
             zorder=3,
         )
-        ax.annotate(
-            camera_name.replace("_", " ").title(),
-            (x, y),
-            xytext=(5, 5),
-            textcoords="offset points",
-            fontsize=9,
-            fontweight="bold",
-            bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7),
-            zorder=4,
-        )
+        # (Annotation removed)
 
-    # Title
-    ax.set_title(
-        "Dundee City Center - CCTV Camera Locations",
-        fontsize=14,
-        fontweight="bold",
-        pad=10,
-    )
+    # Title removed
 
     # Remove axes
     ax.set_xticks([])
@@ -190,17 +176,9 @@ def generate_camera_map(
         marker="o",
     )
 
-    # Add crosshair
-    ax.axhline(
-        y=y_center, color="red", linestyle="--", linewidth=1, alpha=0.5, zorder=2
-    )
-    ax.axvline(
-        x=x_center, color="red", linestyle="--", linewidth=1, alpha=0.5, zorder=2
-    )
+    # Crosshair removed
 
-    # Title
-    display_name = camera_name.replace("_", " ").title()
-    ax.set_title(f"Camera: {display_name}", fontsize=12, fontweight="bold", pad=10)
+    # Title removed
 
     # Remove axes
     ax.set_xticks([])
