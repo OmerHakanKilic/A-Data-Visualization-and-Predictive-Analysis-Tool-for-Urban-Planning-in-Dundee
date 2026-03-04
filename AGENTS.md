@@ -10,21 +10,23 @@ This is a Big Data educational project focused on processing and visualizing CCT
 
 ```
 Big Data/
-├── Python Code/           # All Python scripts and applications
+├── Code/                    # All Python scripts and applications
 │   ├── 01_merge_csv_script.py
 │   ├── 02_normalize_time_from_UTC.py
 │   ├── 03_reformat_time.py
 │   ├── 04_merge_duplicates.py
 │   ├── 05_convert_floats_to_int.py
-│   ├── 06_tab_demo.py     # PyQt6 demo (tab navigation)
-│   ├── 07_map_demo.py     # Main PyQt6 map visualization app
+│   ├── 06_tab_demo.py        # PyQt6 demo (tab navigation)
+│   ├── 07_map_demo.py        # Main PyQt6 map visualization app
+│   ├── 08_holidays.py        # Process UK holidays data
+│   ├── 09_add_holiday_flag.py
+│   ├── 10_fetch_weather_data.py  # Fetch weather from NOAA API
 │   └── generate_map_images.py
-├── Data/                  # Data directory
-│   ├── Raw/               # Raw input data (CSV files)
-│   ├── Processed/         # Processed output data
-│   └── MapImages/         # Map images for visualization
-├── Output/                # Generated output files
-└── Documents/             # Project documentation (sensitive)
+├── Data/                    # Data directory
+│   ├── Raw/                 # Raw input data (CCTV-Data, Holidays, Weather)
+│   └── Processed/           # Processed output data
+├── Output/                  # Generated output files
+└── Documents/               # Project documentation (sensitive)
 ```
 
 ## Build and Runtime Commands
@@ -34,13 +36,15 @@ Big Data/
 Execute data processing scripts in order (they depend on previous outputs):
 
 ```bash
-# Run individual scripts (from Python Code directory)
-cd Python\ Code/
+cd Code/
 python 01_merge_csv_script.py
 python 02_normalize_time_from_UTC.py
 python 03_reformat_time.py
 python 04_merge_duplicates.py
 python 05_convert_floats_to_int.py
+python 08_holidays.py
+python 09_add_holiday_flag.py
+python 10_fetch_weather_data.py
 
 # Run PyQt6 applications
 python 06_tab_demo.py
@@ -49,170 +53,78 @@ python 07_map_demo.py
 
 ### Dependencies
 
-The project uses the following Python packages:
-- `pandas` - Data processing and CSV manipulation
-- `PyQt6` - GUI framework for map visualization
+Install all: `pip install pandas PyQt6 noaa-cdo-api aiohttp python-dotenv`
 
-Install dependencies:
-```bash
-pip install pandas PyQt6
-```
+### Running Tests
 
-### Running a Single Test
-
-**Note:** There are currently no formal tests in this project. If adding tests:
+Currently no formal tests exist. If adding tests:
 
 ```bash
-# With pytest (recommended)
 pytest tests/                    # Run all tests
-pytest tests/test_file.py        # Run specific test file
+pytest tests/test_file.py        # Run specific file
 pytest tests/test_file.py::test_function_name  # Run single test
-
-# With unittest
 python -m unittest discover tests/
-python -m unittest tests.test_module
 ```
 
 ### Linting and Code Quality
 
-Install and run linters:
-
 ```bash
-# Install development dependencies
 pip install ruff black mypy
-
-# Format code
-black Python\ Code/
-
-# Lint code
-ruff check Python\ Code/
-
-# Type checking (if type hints added)
-mypy Python\ Code/
+black Code/          # Format code
+ruff check Code/     # Lint code
+mypy Code/           # Type checking
 ```
 
 ## Code Style Guidelines
 
-### Python Version
+### Python Version & Formatting
 
-- Target Python 3.9+ for compatibility
-- Use f-strings for string formatting (not % formatting or .format())
+- Target Python 3.9+, use f-strings, max line length: 100, 4 spaces for indentation
+- Blank lines between top-level definitions, trailing commas for multi-line collections
 
 ### Imports
 
-Standard library imports first, third-party imports second:
+Standard library first, then third-party:
 
 ```python
+import asyncio
+import functools
 import glob
 import os
+from datetime import datetime
 
 import pandas as pd
+from dotenv import load_dotenv
+from noaa_cdo_api import Extent, NOAAClient
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
-    QApplication,
-    QLabel,
-    QMainWindow,
-    QWidget,
-)
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 ```
 
-- Use explicit imports (avoid `from module import *`)
-- Group related imports from same package
-- Sort imports alphabetically within groups
+- Use explicit imports (no `from module import *`), sort alphabetically within groups
 
 ### Naming Conventions
 
-- **Classes:** PascalCase (`class MainWindow`, `class MapPage`)
-- **Functions/methods:** snake_case (`def initUI`, `def loadData`)
+- **Classes:** PascalCase (`MainWindow`, `MapPage`)
+- **Functions/methods:** snake_case (`initUI`, `load_data`)
 - **Variables:** snake_case (`csv_files`, `merged_df`)
 - **Constants:** UPPER_SNAKE_CASE (`STARTTIME`, `FINISHTIME`)
-- **Private methods:** prefix with underscore (`def _private_method`)
+- **Private methods:** prefix with underscore (`_private_method`)
 
 ### Types
 
-- Add type hints for function signatures and important variables
-- Use `pd.DataFrame` for pandas DataFrames
-- Example from codebase:
-
-```python
-def apply_tint(self, pixmap: QPixmap, color: QColor) -> QPixmap:
-    tinted = pixmap.copy()
-    painter = QPainter(tinted)
-    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
-    painter.fillRect(tinted.rect(), color)
-    painter.end()
-    return tinted
-```
-
-### Formatting
-
-- Maximum line length: 100 characters (or 88 for Black default)
-- Use 4 spaces for indentation (not tabs)
-- Add blank lines between top-level definitions
-- Use parentheses for line continuation:
-
-```python
-scaledPixmap_308 = pixmap_308.scaled(
-    MapPage.MAP_IMAGE_SIZE, MapPage.MAP_IMAGE_SIZE
-)
-```
-
-- Use trailing commas for multi-line imports/collections:
-
-```python
-seasonDropMenu.addItems(
-    [
-        "Winter",
-        "Spring",
-        "Summer",
-        "Autumn",
-    ]
-)
-```
+Add type hints for function signatures and important variables. Use `pd.DataFrame` for pandas DataFrames.
 
 ### Error Handling
 
-- Use try/except blocks for operations that may fail (file I/O, data parsing)
-- Catch specific exceptions when possible
-- Log errors or provide meaningful error messages
-- Example:
+Use try/except for operations that may fail (file I/O, data parsing). Catch specific exceptions when possible.
 
-```python
-try:
-    merged_df.to_csv("../Data/Processed/01_Merged_CCTV_data.csv", index=False)
-except IOError as e:
-    print(f"Error saving file: {e}")
-    raise
-```
+### Data Processing
 
-### Comments
-
-- Avoid unnecessary comments; let code be self-documenting
-- Use docstrings for classes and complex functions:
-
-```python
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setGeometry(300, 300, 1000, 1000)
-        self.stack = QStackedWidget()
-        self.initUI()
-        self.loadData()
-```
-
-### Data Processing Conventions
-
-- Use pandas for CSV operations
-- Use `ignore_index=True` when concatenating DataFrames
-- Set `index=False` when writing to CSV to avoid extra column
-- Validate data after processing steps
+Use pandas for CSV operations. Use `ignore_index=True` when concatenating DataFrames. Set `index=False` when writing to CSV.
 
 ### PyQt6 Patterns
 
-- Follow the standard Qt widget pattern (inherit from QWidget/QMainWindow)
-- Use layouts (QVBoxLayout, QHBoxLayout, QGridLayout) for UI structure
-- Initialize UI in separate `initUI()` method
-- Use `main()` function as entry point:
+Inherit from QWidget/QMainWindow, use layouts (QVBoxLayout, QHBoxLayout, QGridLayout), initialize UI in separate `initUI()` method.
 
 ```python
 def main():
@@ -221,26 +133,66 @@ def main():
     window.show()
     sys.exit(app.exec())
 
-
 if __name__ == "__main__":
     main()
 ```
 
-### File Paths
+### Async/Await Patterns
 
-- Use relative paths from project root or Python Code directory
-- Use `os.path.join()` for path construction:
+Use asyncio for API calls and I/O operations:
 
 ```python
-csv_files = glob.glob(os.path.join(target_csv_folder, "*.csv"))
+import asyncio
+from noaa_cdo_api import NOAAClient
+
+async def fetch_data():
+    async with NOAAClient(token=os.environ.get("NOAA_TOKEN")) as client:
+        return await client.get_data(...)
+
+results = asyncio.run(fetch_data())
 ```
 
-### Best Practices
+### File Paths
 
-1. **Idiomatic Python:** Follow PEP 8 style guide
-2. **Single Responsibility:** Each script should handle one data processing task
-3. **Data Validation:** Validate inputs before processing
-4. **No Secrets:** Never commit sensitive data or credentials
-5. **Dependencies:** Document required packages in code comments
-6. **Modularity:** Extract reusable logic into functions/classes
-7. **Constants:** Define magic numbers as class constants or module-level constants
+Use relative paths from project root or Code directory. Use `os.path.join()` for path construction.
+
+## Security Guidelines
+
+### Never Commit Secrets
+
+- Never commit API tokens, passwords, or secrets
+- Use environment variables for sensitive data
+- Create a `.env` file for local development (add to `.gitignore`)
+
+### Using Environment Variables
+
+```python
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+NOAA_TOKEN = os.environ.get("NOAA_TOKEN")
+if not NOAA_TOKEN:
+    raise ValueError("NOAA_TOKEN environment variable not set")
+```
+
+### .env File Format
+
+Create `Code/.env`: `NOAA_TOKEN=your_api_token_here`
+
+### .gitignore Configuration
+
+```
+.env
+.env.*
+```
+
+## Best Practices
+
+1. Follow PEP 8 style guide
+2. Single Responsibility: each script handles one task
+3. Validate inputs before processing
+4. Never commit sensitive data or credentials
+5. Document required packages
+6. Extract reusable logic into functions/classes
+7. Define magic numbers as constants

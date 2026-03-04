@@ -1,5 +1,9 @@
 # Agent context file (auto-generated)
 Agents.md
 
+# Environment variables (contains secrets)
+.env
+.env.*
+
 # Documents folder (contains sensitive student project materials)
 Documents/
