@@ -1,7 +1,7 @@
 import sys
 
 import pandas as pd
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
@@ -28,12 +28,13 @@ STATE = {
     "finishTime": 23,
     "day": "Monday",
     "season": "All",
-    "Camera": "None",
+    "Camera": "308 Murraygate",
 }
 
 
 class MapPage(QWidget):
     MAP_IMAGE_SIZE = int(885 / 3)
+    sidebar_hidden = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -46,6 +47,15 @@ class MapPage(QWidget):
         sidebarLayout = QVBoxLayout()
         sidebarLayout.setSpacing(10)
         sidebarLayout.setContentsMargins(10, 10, 10, 10)
+
+        headerLayout = QHBoxLayout()
+        headerLayout.addStretch()
+        closeSidebarBtn = QPushButton("✕")
+        closeSidebarBtn.setFixedSize(30, 30)
+        closeSidebarBtn.clicked.connect(self.hide_sidebar)
+        headerLayout.addWidget(closeSidebarBtn)
+
+        sidebarLayout.addLayout(headerLayout)
 
         filtersLabel = QLabel("Filters")
         filtersLabel.setStyleSheet("font-weight: bold; font-size: 14px;")
@@ -90,10 +100,6 @@ class MapPage(QWidget):
             "font-weight: bold; font-size: 14px; margin-top: 10px;"
         )
         self.cameraComboBox = QComboBox()
-        self.cameraListWidget = QListWidget()
-        self.cameraListWidget.setSpacing(2)
-        self.cameraComboBox.setModel(self.cameraListWidget.model())
-        self.cameraComboBox.setView(self.cameraListWidget)
         self.cameraComboBox.setMaxVisibleItems(8)
 
         camera_ids = [
@@ -106,14 +112,8 @@ class MapPage(QWidget):
             "332 Waterfront",
             "500 Hilltown",
         ]
-
-        for cam_id in camera_ids:
-            item = QListWidgetItem(cam_id)
-            item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(Qt.CheckState.Checked)
-            self.cameraListWidget.addItem(item)
-
-        self.cameraListWidget.itemClicked.connect(self.on_camera_clicked)
+        self.cameraComboBox.addItems(camera_ids)
+        self.cameraComboBox.currentIndexChanged.connect(self.on_camera_changed)
 
         sidebarLayout.addWidget(dayLabel)
         sidebarLayout.addWidget(self.dayDropMenu)
@@ -127,9 +127,9 @@ class MapPage(QWidget):
         sidebarLayout.addWidget(self.cameraComboBox)
         sidebarLayout.addStretch()
 
-        sidebarWidget = QWidget()
-        sidebarWidget.setLayout(sidebarLayout)
-        sidebarWidget.setFixedWidth(220)
+        self.sidebarWidget = QWidget()
+        self.sidebarWidget.setLayout(sidebarLayout)
+        self.sidebarWidget.setFixedWidth(220)
 
         gridLayout = QGridLayout()
 
@@ -139,7 +139,7 @@ class MapPage(QWidget):
         mapWidget = QWidget()
         mapWidget.setLayout(gridLayout)
 
-        mainSplitter.addWidget(sidebarWidget)
+        mainSplitter.addWidget(self.sidebarWidget)
         mainSplitter.addWidget(placeholderLabel)
         mainSplitter.setStretchFactor(0, 0)
         mainSplitter.setStretchFactor(1, 1)
@@ -158,10 +158,25 @@ class MapPage(QWidget):
         return tinted
 
     def on_day_changed(self, index):
-        pass
+        day_dict = {
+            0: "Monday",
+            1: "Tuesday",
+            2: "Wednesday",
+            3: "Thursday",
+            4: "Friday",
+            5: "Saturday",
+            6: "Sunday",
+        }
+        STATE["day"] = day_dict[index]
 
     def on_season_changed(self, index):
-        pass
+        season_dict = {
+            0: "Winter",
+            1: "Spring",
+            2: "Summer",
+            3: "Autumn",
+        }
+        STATE["season"] = season_dict[index]
 
     def on_start_time_changed(self, value):
         STARTTIME = value
@@ -172,13 +187,27 @@ class MapPage(QWidget):
         self.finishTimeLabel.setText("Start Time: " + str(FINISHTIME))
 
     def on_camera_clicked(self, item):
-        if item.checkState() == Qt.CheckState.Checked:
-            item.setCheckState(Qt.CheckState.Unchecked)
-        else:
-            item.setCheckState(Qt.CheckState.Checked)
-
-    def on_camera_changed(self, state):
         pass
+
+    def hide_sidebar(self):
+        self.sidebarWidget.hide()
+        self.sidebar_hidden.emit()
+
+    def show_sidebar(self):
+        self.sidebarWidget.show()
+
+    def on_camera_changed(self, index):
+        camera_dict = {
+            0: "308 Murraygate",
+            1: "310 Seagate",
+            2: "317 Reform St",
+            3: "320 Westport",
+            4: "323 Union Street",
+            5: "328 South Marketgate",
+            6: "332 Waterfront",
+            7: "500 Hilltown",
+        }
+        STATE["Camera"] = camera_dict[index]
 
     def updateData(self):
         pass
@@ -217,6 +246,12 @@ class MainWindow(QMainWindow):
         self.homeButton.clicked.connect(lambda: self.stack.setCurrentIndex(1))
         self.machineButton.clicked.connect(lambda: self.stack.setCurrentIndex(0))
 
+        self.showSidebarBtn = QPushButton("☰", self)
+        self.showSidebarBtn.setFixedSize(40, 40)
+        self.showSidebarBtn.hide()
+        self.showSidebarBtn.clicked.connect(self.on_show_sidebar_clicked)
+        self.mapPage.sidebar_hidden.connect(self.on_sidebar_hidden)
+
         masterLayout = QVBoxLayout()
 
         topBar = QHBoxLayout()
@@ -227,6 +262,16 @@ class MainWindow(QMainWindow):
         masterLayout.addWidget(self.stack)
 
         central_widget.setLayout(masterLayout)
+
+        self.central_layout = masterLayout
+
+    def on_sidebar_hidden(self):
+        self.showSidebarBtn.show()
+        self.showSidebarBtn.setGeometry(5, 80, 40, 40)
+
+    def on_show_sidebar_clicked(self):
+        self.mapPage.show_sidebar()
+        self.showSidebarBtn.hide()
 
 
 def main():
