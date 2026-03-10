@@ -28,7 +28,7 @@ STATE = {
     "finishTime": 23,
     "day": "Monday",
     "season": "All",
-    "Camera": "308 Murraygate",
+    "Camera": "308_murraygate",
 }
 
 
@@ -103,14 +103,14 @@ class MapPage(QWidget):
         self.cameraComboBox.setMaxVisibleItems(8)
 
         camera_ids = [
-            "308 Murraygate",
-            "310 Seagate",
-            "317 Reform St",
-            "320 Westport",
-            "323 Union Street",
-            "328 South Marketgate",
-            "332 Waterfront",
-            "500 Hilltown",
+            "308_murraygate",
+            "310_seagate",
+            "317_reform_st",
+            "320_westport",
+            "323_union_street",
+            "328_south_marketgate",
+            "332_waterfront",
+            "500_hilltown",
         ]
         self.cameraComboBox.addItems(camera_ids)
         self.cameraComboBox.currentIndexChanged.connect(self.on_camera_changed)
@@ -133,14 +133,16 @@ class MapPage(QWidget):
 
         gridLayout = QGridLayout()
 
-        placeholderLabel = QLabel("Map view will be implemented here")
-        placeholderLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.mapDisplayLabel = QLabel("Map view will be implemented here")
+        self.mapDisplayLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        mapPixmap = QPixmap("../Data/MapImages/" + STATE["Camera"] + ".png")
+        self.mapDisplayLabel.setPixmap(mapPixmap)
 
         mapWidget = QWidget()
         mapWidget.setLayout(gridLayout)
 
         mainSplitter.addWidget(self.sidebarWidget)
-        mainSplitter.addWidget(placeholderLabel)
+        mainSplitter.addWidget(self.mapDisplayLabel)
         mainSplitter.setStretchFactor(0, 0)
         mainSplitter.setStretchFactor(1, 1)
 
@@ -168,6 +170,7 @@ class MapPage(QWidget):
             6: "Sunday",
         }
         STATE["day"] = day_dict[index]
+        self.updateData()
 
     def on_season_changed(self, index):
         season_dict = {
@@ -177,14 +180,17 @@ class MapPage(QWidget):
             3: "Autumn",
         }
         STATE["season"] = season_dict[index]
+        self.updateData()
 
     def on_start_time_changed(self, value):
         STARTTIME = value
         self.startTimeLabel.setText("Start Time: " + str(STARTTIME))
+        self.updateData()
 
     def on_finish_time_changed(self, value):
         FINISHTIME = value
         self.finishTimeLabel.setText("Start Time: " + str(FINISHTIME))
+        self.updateData()
 
     def on_camera_clicked(self, item):
         pass
@@ -198,19 +204,43 @@ class MapPage(QWidget):
 
     def on_camera_changed(self, index):
         camera_dict = {
-            0: "308 Murraygate",
-            1: "310 Seagate",
-            2: "317 Reform St",
-            3: "320 Westport",
-            4: "323 Union Street",
-            5: "328 South Marketgate",
-            6: "332 Waterfront",
-            7: "500 Hilltown",
+            0: "308_murraygate",
+            1: "310_seagate",
+            2: "317_reform_st",
+            3: "320_westport",
+            4: "323_union_street",
+            5: "328_south_marketgate",
+            6: "332_waterfront",
+            7: "500_hilltown",
         }
         STATE["Camera"] = camera_dict[index]
+        self.updateData()
 
     def updateData(self):
-        pass
+        # Map update
+        currentMapPixmap = QPixmap("../Data/MapImages/" + STATE["Camera"] + ".png")
+        self.mapDisplayLabel.setPixmap(currentMapPixmap)
+
+        # Filtering
+        df_to_be_filtered = cctv_df
+
+        # Camera filtering
+
+        # Season filter
+        if STATE["season"] == "Spring":
+            df_to_be_filtered[
+                df_to_be_filtered["Month"] < 6 and df_to_be_filtered["Month"] > 2
+            ]
+        elif STATE["season"] == "Summer":
+            pass
+        elif STATE["season"] == "Autumn":
+            pass
+        else:
+            pass
+
+        # Day filter
+
+        # Time filter
 
 
 class MLPage(QWidget):

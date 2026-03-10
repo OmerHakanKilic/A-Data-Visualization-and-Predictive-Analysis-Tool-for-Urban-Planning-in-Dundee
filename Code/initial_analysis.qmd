@@ -28,7 +28,7 @@ Openly available CCTV data:
 ```{python}
 import pandas as pd
 
-df = pd.read_csv('CCTV-Data/CCTV_Data_Counts_2024_July.csv')
+df = pd.read_csv("../Data/Processed/06_With_Holidays.csv")
 
 display(df)
 ```
@@ -38,4 +38,8 @@ Features:
 ```{python}
 features=df.columns
 features
+```
+Detect outliers
+```{python}
+df['Number of People'].describe()
 ```
