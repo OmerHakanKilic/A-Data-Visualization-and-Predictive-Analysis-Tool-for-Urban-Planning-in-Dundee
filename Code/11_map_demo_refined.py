@@ -131,15 +131,15 @@ class MapPage(QWidget):
         self.sidebarWidget.setLayout(sidebarLayout)
         self.sidebarWidget.setFixedWidth(220)
 
-        gridLayout = QGridLayout()
+        mapLayout = QVBoxLayout()
 
         self.mapDisplayLabel = QLabel("Map view will be implemented here")
         self.mapDisplayLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         mapPixmap = QPixmap("../Data/MapImages/" + STATE["Camera"] + ".png")
         self.mapDisplayLabel.setPixmap(mapPixmap)
 
-        mapWidget = QWidget()
-        mapWidget.setLayout(gridLayout)
+        # Medians
+        medianVehicleLabel = QLabel("Median Vehicle: ")
 
         mainSplitter.addWidget(self.sidebarWidget)
         mainSplitter.addWidget(self.mapDisplayLabel)
@@ -216,31 +216,60 @@ class MapPage(QWidget):
         STATE["Camera"] = camera_dict[index]
         self.updateData()
 
+    def _get_camera_source_name(self, camera_id: str) -> str:
+        camera_source_map = {
+            "308_murraygate": "Camera  308 Murraygate",
+            "310_seagate": "Camera 310 - Seagate",
+            "317_reform_st": "Camera 317 Reform St",
+            "320_westport": "Camera 320 Westport",
+            "323_union_street": "Camera 323 Union Street",
+            "328_south_marketgate": "Camera 328 South Marketgait",
+            "332_waterfront": "Camera 332 Waterfront",
+            "500_hilltown": "Camera 500 Hilltown",
+        }
+        return camera_source_map.get(camera_id, camera_id)
+
     def updateData(self):
-        # Map update
         currentMapPixmap = QPixmap("../Data/MapImages/" + STATE["Camera"] + ".png")
         self.mapDisplayLabel.setPixmap(currentMapPixmap)
 
-        # Filtering
-        df_to_be_filtered = cctv_df
+        filtered_df = cctv_df.copy()
 
-        # Camera filtering
+        filtered_df = filtered_df[
+            filtered_df["Source"] == self._get_camera_source_name(STATE["Camera"])
+        ]
 
-        # Season filter
-        if STATE["season"] == "Spring":
-            df_to_be_filtered[
-                df_to_be_filtered["Month"] < 6 and df_to_be_filtered["Month"] > 2
+        if STATE["season"] != "All":
+            season_months = {
+                "Winter": [12, 1, 2],
+                "Spring": [3, 4, 5],
+                "Summer": [6, 7, 8],
+                "Autumn": [9, 10, 11],
+            }
+            filtered_df = filtered_df[
+                filtered_df["Month"].isin(season_months[STATE["season"]])
             ]
-        elif STATE["season"] == "Summer":
-            pass
-        elif STATE["season"] == "Autumn":
-            pass
-        else:
-            pass
 
-        # Day filter
+        day_abbrev = {
+            "Monday": "Mon",
+            "Tuesday": "Tue",
+            "Wednesday": "Wed",
+            "Thursday": "Thu",
+            "Friday": "Fri",
+            "Saturday": "Sat",
+            "Sunday": "Sun",
+        }
+        filtered_df = filtered_df[
+            filtered_df["Day of the Week"] == day_abbrev[STATE["day"]]
+        ]
 
-        # Time filter
+        filtered_df = filtered_df[
+            (filtered_df["Starting time"] >= STATE["startTime"])
+            & (filtered_df["Finishing time"] <= STATE["finishTime"])
+        ]
+
+    def updateMap(self):
+        pass
 
 
 class MLPage(QWidget):
@@ -305,6 +334,8 @@ class MainWindow(QMainWindow):
 
 
 def main():
+    global cctv_df
+    global filtered_df
     cctv_df = pd.read_csv("../Data/Processed/06_With_Holidays.csv")
     app = QApplication(sys.argv)
     window = MainWindow()
