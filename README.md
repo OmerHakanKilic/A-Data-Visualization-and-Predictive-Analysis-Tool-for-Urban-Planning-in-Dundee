@@ -1,11 +1,6 @@
 # Required packages:
 
-pandas
+pandas, matplotlib, numpy, PyQt6
 ```bash
-pip install pandas
-```
-
-PyQt6
-```bash
-pip install PyQt6
+pip install pandas matplotlib numpy PyQt6
 ```
