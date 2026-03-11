@@ -27,7 +27,7 @@ STATE = {
     "startTime": 0,
     "finishTime": 23,
     "day": "Monday",
-    "season": "All",
+    "season": "Winter",
     "Camera": "308_murraygate",
 }
 
@@ -92,6 +92,7 @@ class MapPage(QWidget):
         finishTimeSlider = QSlider()
         finishTimeSlider.setMaximum(23)
         finishTimeSlider.setMinimum(0)
+        finishTimeSlider.setValue(23)
         finishTimeSlider.setOrientation(Qt.Orientation.Horizontal)
         finishTimeSlider.valueChanged.connect(self.on_finish_time_changed)
 
@@ -138,17 +139,32 @@ class MapPage(QWidget):
         mapPixmap = QPixmap("../Data/MapImages/" + STATE["Camera"] + ".png")
         self.mapDisplayLabel.setPixmap(mapPixmap)
 
-        # Medians
-        medianVehicleLabel = QLabel("Median Vehicle: ")
+        medianLabelsLayout = QHBoxLayout()
+
+        self.medianVehicleLabel = QLabel("Median Vehicle: --")
+        self.medianPeopleLabel = QLabel("Median People: --")
+        self.medianBicyleLabel = QLabel("Median Number of Bicycles: --")
+        medianLabelsLayout.addWidget(self.medianVehicleLabel)
+        medianLabelsLayout.addWidget(self.medianPeopleLabel)
+        medianLabelsLayout.addWidget(self.medianBicyleLabel)
+
+        histogramLayout = QHBoxLayout()
+
+        mapLayout.addWidget(self.mapDisplayLabel)
+        mapLayout.addLayout(medianLabelsLayout)
+
+        mapWidget = QWidget()
+        mapWidget.setLayout(mapLayout)
 
         mainSplitter.addWidget(self.sidebarWidget)
-        mainSplitter.addWidget(self.mapDisplayLabel)
+        mainSplitter.addWidget(mapWidget)
         mainSplitter.setStretchFactor(0, 0)
         mainSplitter.setStretchFactor(1, 1)
 
         mainLayout = QVBoxLayout()
         mainLayout.addWidget(mainSplitter)
         self.setLayout(mainLayout)
+        self.updateData()
 
     def apply_tint(self, pixmap: QPixmap, color: QColor) -> QPixmap:
         # Create a copy to work on
@@ -183,13 +199,13 @@ class MapPage(QWidget):
         self.updateData()
 
     def on_start_time_changed(self, value):
-        STARTTIME = value
-        self.startTimeLabel.setText("Start Time: " + str(STARTTIME))
+        STATE["startTime"] = value
+        self.startTimeLabel.setText("Start Time: " + str(value))
         self.updateData()
 
     def on_finish_time_changed(self, value):
-        FINISHTIME = value
-        self.finishTimeLabel.setText("Start Time: " + str(FINISHTIME))
+        STATE["finishTime"] = value
+        self.finishTimeLabel.setText("Finish Time: " + str(value))
         self.updateData()
 
     def on_camera_clicked(self, item):
@@ -267,6 +283,20 @@ class MapPage(QWidget):
             (filtered_df["Starting time"] >= STATE["startTime"])
             & (filtered_df["Finishing time"] <= STATE["finishTime"])
         ]
+
+        print(filtered_df)
+
+        self.medianVehicleLabel.setText(
+            "Median Number of Vehicle: "
+            + str(filtered_df["Number of Road Vehicles"].median())
+        )
+        self.medianPeopleLabel.setText(
+            "Median Number of People: " + str(filtered_df["Number of People"].median())
+        )
+        self.medianBicyleLabel.setText(
+            "Median Number of Bicycles: "
+            + str(filtered_df["Number of Bicycles"].median())
+        )
 
     def updateMap(self):
         pass
