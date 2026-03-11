@@ -1,5 +1,7 @@
 import sys
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPixmap
@@ -150,8 +152,16 @@ class MapPage(QWidget):
 
         histogramLayout = QHBoxLayout()
 
+        self.vehicleHistogramLabel = QLabel("Vehicle Histogram")
+        self.peopleHistogramLabel = QLabel("People Histogram")
+        self.bicycleHistogramLabel = QLabel("Bicycle Histogram")
+        histogramLayout.addWidget(self.vehicleHistogramLabel)
+        histogramLayout.addWidget(self.peopleHistogramLabel)
+        histogramLayout.addWidget(self.bicycleHistogramLabel)
+
         mapLayout.addWidget(self.mapDisplayLabel)
         mapLayout.addLayout(medianLabelsLayout)
+        mapLayout.addLayout(histogramLayout)
 
         mapWidget = QWidget()
         mapWidget.setLayout(mapLayout)
@@ -174,6 +184,24 @@ class MapPage(QWidget):
         painter.fillRect(tinted.rect(), color)
         painter.end()
         return tinted
+
+    def create_histogram_pixmap(self, data: pd.Series, title: str, color: str) -> QPixmap:
+        fig, ax = plt.subplots(figsize=(4, 3))
+        ax.hist(data.dropna(), bins=20, color=color, edgecolor="black", alpha=0.7)
+        ax.set_title(title, fontsize=10)
+        ax.set_xlabel("Count", fontsize=8)
+        ax.set_ylabel("Frequency", fontsize=8)
+        ax.tick_params(axis="both", labelsize=7)
+        fig.tight_layout()
+
+        from io import BytesIO
+        buffer = BytesIO()
+        plt.savefig(buffer, format="png", dpi=80)
+        buffer.seek(0)
+        pixmap = QPixmap()
+        pixmap.loadFromData(buffer.read())
+        plt.close(fig)
+        return pixmap
 
     def on_day_changed(self, index):
         day_dict = {
@@ -296,6 +324,28 @@ class MapPage(QWidget):
         self.medianBicyleLabel.setText(
             "Median Number of Bicycles: "
             + str(filtered_df["Number of Bicycles"].median())
+        )
+
+        self.vehicleHistogramLabel.setPixmap(
+            self.create_histogram_pixmap(
+                filtered_df["Number of Road Vehicles"],
+                "Vehicles",
+                "blue"
+            )
+        )
+        self.peopleHistogramLabel.setPixmap(
+            self.create_histogram_pixmap(
+                filtered_df["Number of People"],
+                "People",
+                "green"
+            )
+        )
+        self.bicycleHistogramLabel.setPixmap(
+            self.create_histogram_pixmap(
+                filtered_df["Number of Bicycles"],
+                "Bicycles",
+                "orange"
+            )
         )
 
     def updateMap(self):
