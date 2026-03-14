@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QPushButton,
+    QScrollArea,
     QSlider,
     QSplitter,
     QStackedWidget,
@@ -165,9 +166,12 @@ class MapPage(QWidget):
 
         mapWidget = QWidget()
         mapWidget.setLayout(mapLayout)
+        mapScrollArea = QScrollArea()
+        mapScrollArea.setWidget(mapWidget)
+        mapScrollArea.setWidgetResizable(False)
 
         mainSplitter.addWidget(self.sidebarWidget)
-        mainSplitter.addWidget(mapWidget)
+        mainSplitter.addWidget(mapScrollArea)
         mainSplitter.setStretchFactor(0, 0)
         mainSplitter.setStretchFactor(1, 1)
 
@@ -185,7 +189,9 @@ class MapPage(QWidget):
         painter.end()
         return tinted
 
-    def create_histogram_pixmap(self, data: pd.Series, title: str, color: str) -> QPixmap:
+    def create_histogram_pixmap(
+        self, data: pd.Series, title: str, color: str
+    ) -> QPixmap:
         fig, ax = plt.subplots(figsize=(4, 3))
         ax.hist(data.dropna(), bins=20, color=color, edgecolor="black", alpha=0.7)
         ax.set_title(title, fontsize=10)
@@ -195,6 +201,7 @@ class MapPage(QWidget):
         fig.tight_layout()
 
         from io import BytesIO
+
         buffer = BytesIO()
         plt.savefig(buffer, format="png", dpi=80)
         buffer.seek(0)
@@ -328,23 +335,17 @@ class MapPage(QWidget):
 
         self.vehicleHistogramLabel.setPixmap(
             self.create_histogram_pixmap(
-                filtered_df["Number of Road Vehicles"],
-                "Vehicles",
-                "blue"
+                filtered_df["Number of Road Vehicles"], "Vehicles", "blue"
             )
         )
         self.peopleHistogramLabel.setPixmap(
             self.create_histogram_pixmap(
-                filtered_df["Number of People"],
-                "People",
-                "green"
+                filtered_df["Number of People"], "People", "green"
             )
         )
         self.bicycleHistogramLabel.setPixmap(
             self.create_histogram_pixmap(
-                filtered_df["Number of Bicycles"],
-                "Bicycles",
-                "orange"
+                filtered_df["Number of Bicycles"], "Bicycles", "orange"
             )
         )
 

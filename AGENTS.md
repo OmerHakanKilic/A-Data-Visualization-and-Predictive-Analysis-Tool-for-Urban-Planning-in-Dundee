@@ -21,7 +21,7 @@ Big Data/
 │   ├── 08_holidays.py        # Process UK holidays data
 │   ├── 09_add_holiday_flag.py
 │   ├── 10_fetch_weather_data.py  # Fetch weather from NOAA API
-│   └── generate_map_images.py
+│   └── 11_map_demo_refined.py   # PyQt6 app with histograms
 ├── Data/                    # Data directory
 │   ├── Raw/                 # Raw input data (CCTV-Data, Holidays, Weather)
 │   └── Processed/           # Processed output data
@@ -45,25 +45,13 @@ python 05_convert_floats_to_int.py
 python 08_holidays.py
 python 09_add_holiday_flag.py
 python 10_fetch_weather_data.py
-
-# Run PyQt6 applications
-python 06_tab_demo.py
-python 07_map_demo.py
+python 11_map_demo_refined.py
 ```
 
 ### Dependencies
 
-Install all: `pip install pandas PyQt6 noaa-cdo-api aiohttp python-dotenv`
-
-### Running Tests
-
-Currently no formal tests exist. If adding tests:
-
 ```bash
-pytest tests/                    # Run all tests
-pytest tests/test_file.py        # Run specific file
-pytest tests/test_file.py::test_function_name  # Run single test
-python -m unittest discover tests/
+pip install pandas matplotlib numpy PyQt6 noaa-cdo-api aiohttp python-dotenv
 ```
 
 ### Linting and Code Quality
@@ -84,23 +72,18 @@ mypy Code/           # Type checking
 
 ### Imports
 
-Standard library first, then third-party:
+Standard library first, then third-party. Use explicit imports (no `from module import *`), sort alphabetically within groups:
 
 ```python
-import asyncio
-import functools
-import glob
 import os
 from datetime import datetime
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-from dotenv import load_dotenv
-from noaa_cdo_api import Extent, NOAAClient
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 ```
-
-- Use explicit imports (no `from module import *`), sort alphabetically within groups
 
 ### Naming Conventions
 
@@ -124,7 +107,7 @@ Use pandas for CSV operations. Use `ignore_index=True` when concatenating DataFr
 
 ### PyQt6 Patterns
 
-Inherit from QWidget/QMainWindow, use layouts (QVBoxLayout, QHBoxLayout, QGridLayout), initialize UI in separate `initUI()` method.
+Inherit from QWidget/QMain, use layouts (QVBoxLayout, QHBoxLayout, QGridLayout), initialize UI in separate `initUI()` method. Use the standard main pattern:
 
 ```python
 def main():
@@ -132,25 +115,11 @@ def main():
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
-
-if __name__ == "__main__":
-    main()
 ```
 
 ### Async/Await Patterns
 
-Use asyncio for API calls and I/O operations:
-
-```python
-import asyncio
-from noaa_cdo_api import NOAAClient
-
-async def fetch_data():
-    async with NOAAClient(token=os.environ.get("NOAA_TOKEN")) as client:
-        return await client.get_data(...)
-
-results = asyncio.run(fetch_data())
-```
+Use asyncio for API calls: `async with NOAAClient(token=...) as client: return await client.get_data(...)`
 
 ### File Paths
 
@@ -174,17 +143,6 @@ load_dotenv()
 NOAA_TOKEN = os.environ.get("NOAA_TOKEN")
 if not NOAA_TOKEN:
     raise ValueError("NOAA_TOKEN environment variable not set")
-```
-
-### .env File Format
-
-Create `Code/.env`: `NOAA_TOKEN=your_api_token_here`
-
-### .gitignore Configuration
-
-```
-.env
-.env.*
 ```
 
 ## Best Practices
