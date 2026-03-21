@@ -1,3 +1,5 @@
+from typing import cast
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -11,11 +13,14 @@ TESTING_OUTPUT = "../Data/Processed/11_testing_before_regularization.csv"
 df = pd.read_csv(INPUT_PATH)
 print(f"Loaded {len(df):,} rows from {INPUT_PATH}")
 
-train_df, test_df = train_test_split(
-    df,
-    train_size=TRAINING_RATIO,
-    test_size=TESTING_RATIO,
-    random_state=42,
+train_df, test_df = cast(
+    tuple[pd.DataFrame, pd.DataFrame],
+    train_test_split(
+        df,
+        train_size=TRAINING_RATIO,
+        test_size=TESTING_RATIO,
+        random_state=42,
+    ),
 )
 
 train_df.to_csv(TRAINING_OUTPUT, index=False)
