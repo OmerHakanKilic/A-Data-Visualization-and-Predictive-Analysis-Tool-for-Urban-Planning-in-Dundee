@@ -16,13 +16,18 @@ Big Data/
 │   ├── 03_reformat_time.py
 │   ├── 04_merge_duplicates.py
 │   ├── 05_convert_floats_to_int.py
-│   ├── 06_tab_demo.py        # PyQt6 demo (tab navigation)
-│   ├── 07_map_demo.py        # Main PyQt6 map visualization app
-│   ├── 08_holidays.py        # Process UK holidays data
+│   ├── 08_holidays.py
 │   ├── 09_add_holiday_flag.py
-│   ├── 10_fetch_weather_data.py  # Fetch weather from NOAA API
-│   └── 11_map_demo_refined.py   # PyQt6 app with histograms
-├── Data/                    # Data directory
+│   ├── 10_fetch_weather_data.py
+│   ├── 11_map_demo_refined.py   # PyQt6 app with histograms
+│   ├── 12_add_weather_data_to_dataset.py
+│   ├── 13_EDA.py
+│   ├── 14_handling_missing_values.py
+│   ├── 15_encoding_the_data.py
+│   ├── 16_splitting_data.py
+│   ├── 06_tab_demo.py        # PyQt6 demo (tab navigation)
+│   └── 07_map_demo.py        # Main PyQt6 map visualization app
+├── Data/
 │   ├── Raw/                 # Raw input data (CCTV-Data, Holidays, Weather)
 │   └── Processed/           # Processed output data
 ├── Output/                  # Generated output files
@@ -45,16 +50,28 @@ python 05_convert_floats_to_int.py
 python 08_holidays.py
 python 09_add_holiday_flag.py
 python 10_fetch_weather_data.py
-python 11_map_demo_refined.py
+python 12_add_weather_data_to_dataset.py
+python 13_EDA.py
+python 14_handling_missing_values.py
+python 15_encoding_the_data.py
+python 16_splitting_data.py
 ```
 
-### Dependencies
+### Running GUI Applications
+
+```bash
+python Code/11_map_demo_refined.py   # Main map visualization with histograms
+python Code/07_map_demo.py          # Basic map demo
+python Code/06_tab_demo.py           # PyQt6 tab demo
+```
+
+## Dependencies
 
 ```bash
 pip install pandas matplotlib numpy PyQt6 noaa-cdo-api aiohttp python-dotenv
 ```
 
-### Linting and Code Quality
+## Linting and Code Quality
 
 ```bash
 pip install ruff black mypy
@@ -69,6 +86,7 @@ mypy Code/           # Type checking
 
 - Target Python 3.9+, use f-strings, max line length: 100, 4 spaces for indentation
 - Blank lines between top-level definitions, trailing commas for multi-line collections
+- Always use `if __name__ == "__main__":` guard for executable scripts
 
 ### Imports
 
@@ -81,35 +99,71 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QMainWindow,
+    QWidget,
+)
 ```
 
 ### Naming Conventions
 
-- **Classes:** PascalCase (`MainWindow`, `MapPage`)
-- **Functions/methods:** snake_case (`initUI`, `load_data`)
+- **Classes:** PascalCase (`MapPage`, `MainWindow`)
+- **Functions/methods:** snake_case (`initUI`, `load_data`, `main`)
 - **Variables:** snake_case (`csv_files`, `merged_df`)
-- **Constants:** UPPER_SNAKE_CASE (`STARTTIME`, `FINISHTIME`)
+- **Constants:** UPPER_SNAKE_CASE (`INPUT_PATH`, `OUTPUT_PATH`, `STARTTIME`)
 - **Private methods:** prefix with underscore (`_private_method`)
 
 ### Types
 
-Add type hints for function signatures and important variables. Use `pd.DataFrame` for pandas DataFrames.
+Add type hints for function signatures and important variables. Use `pd.DataFrame` for pandas DataFrames:
+
+```python
+def process_data(df: pd.DataFrame) -> pd.DataFrame:
+    cctv_df: pd.DataFrame
+```
 
 ### Error Handling
 
-Use try/except for operations that may fail (file I/O, data parsing). Catch specific exceptions when possible.
+Use try/except for file I/O and data parsing. Catch specific exceptions:
+
+```python
+try:
+    df = pd.read_csv(path)
+except FileNotFoundError:
+    print(f"File not found: {path}")
+except pd.errors.EmptyDataError:
+    print(f"Empty file: {path}")
+```
 
 ### Data Processing
 
-Use pandas for CSV operations. Use `ignore_index=True` when concatenating DataFrames. Set `index=False` when writing to CSV.
+Use pandas for CSV operations. Use `ignore_index=True` when concatenating DataFrames. Set `index=False` when writing to CSV:
+
+```python
+merged_df = pd.concat(list_of_df, ignore_index=True)
+merged_df.to_csv(output_path, index=False)
+```
 
 ### PyQt6 Patterns
 
-Inherit from QWidget/QMain, use layouts (QVBoxLayout, QHBoxLayout, QGridLayout), initialize UI in separate `initUI()` method. Use the standard main pattern:
+Inherit from QWidget/QMainWindow, use layouts (QVBoxLayout, QHBoxLayout, QGridLayout), initialize UI in separate `initUI()` method:
 
 ```python
+class MapPage(QWidget):
+    MAP_IMAGE_SIZE = int(885 / 3)
+    sidebar_hidden = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
@@ -119,11 +173,22 @@ def main():
 
 ### Async/Await Patterns
 
-Use asyncio for API calls: `async with NOAAClient(token=...) as client: return await client.get_data(...)`
+Use asyncio for API calls:
+
+```python
+async def fetch_weather():
+    async with NOAAClient(token=os.environ.get("NOAA_TOKEN")) as client:
+        return await client.get_data(...)
+```
 
 ### File Paths
 
-Use relative paths from project root or Code directory. Use `os.path.join()` for path construction.
+Use relative paths from project root. Use `os.path.join()` or pathlib for path construction:
+
+```python
+INPUT_PATH = "../Data/Processed/data.csv"
+OUTPUT_PATH = os.path.join("..", "Data", "Processed", "output.csv")
+```
 
 ## Security Guidelines
 
@@ -151,6 +216,6 @@ if not NOAA_TOKEN:
 2. Single Responsibility: each script handles one task
 3. Validate inputs before processing
 4. Never commit sensitive data or credentials
-5. Document required packages
+5. Document required packages in README.md
 6. Extract reusable logic into functions/classes
-7. Define magic numbers as constants
+7. Define magic numbers as constants at module level
