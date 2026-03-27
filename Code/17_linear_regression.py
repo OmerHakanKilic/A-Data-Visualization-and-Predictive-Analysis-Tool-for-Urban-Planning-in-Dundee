@@ -1,14 +1,16 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from joblib import dump
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 TRAINING_PATH = "../Data/Processed/10_training_before_regularization.csv"
 TESTING_PATH = "../Data/Processed/11_testing_before_regularization.csv"
-OUTPUT_DIR = Path("../Output/")
+OUTPUT_DIR = Path("../Output/Linear-Regression")
 
 TARGETS = [
     "Number of Bicycles",
@@ -59,16 +61,53 @@ def main():
         # Save the model to the path
         dump(model, model_path)
 
-        pd.DataFrame(
+        temp_train_df = pd.DataFrame(
             {"actual": y_train, "predicted": train_metrics["predictions"]}
-        ).to_csv(train_pred_path, index=False)
+        )
+        temp_train_df.to_csv(train_pred_path, index=False)
 
-        pd.DataFrame(
+        plt.figure()
+        sns.lineplot(
+            x=temp_train_df.index,
+            y=temp_train_df["actual"],
+            label="Actual",
+            errorbar=None,
+        )
+        sns.lineplot(
+            x=temp_train_df.index,
+            y=temp_train_df["predicted"],
+            label="Predicted",
+            errorbar=None,
+        )
+        plt.legend()
+        plt.savefig(OUTPUT_DIR / f"figure_{base_name}_train.png", dpi=300)
+        plt.close()
+
+        temp_test_df = pd.DataFrame(
             {"actual": y_test, "predicted": test_metrics["predictions"]}
-        ).to_csv(test_pred_path, index=False)
+        )
+        temp_test_df.to_csv(test_pred_path, index=False)
+
+        plt.figure()
+        sns.lineplot(
+            x=temp_test_df.index,
+            y=temp_test_df["actual"],
+            label="Actual",
+            errorbar=None,
+        )
+        sns.lineplot(
+            x=temp_test_df.index,
+            y=temp_test_df["predicted"],
+            label="Predicted",
+            errorbar=None,
+        )
+        plt.legend()
+        plt.savefig(OUTPUT_DIR / f"figure_{base_name}_test.png")
+        plt.close()
 
         print(
-            f"  Saved: {model_path.name}, {train_pred_path.name}, {test_pred_path.name}\n"
+            f"  Saved: {model_path.name}, {train_pred_path.name}, {test_pred_path.name}, "
+            f"figure_{base_name}_train.png, figure_{base_name}_test.png\n"
         )
         results[target] = {"train": train_metrics, "test": test_metrics}
 
