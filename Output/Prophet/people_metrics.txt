@@ -1,0 +1,5 @@
+Model: people
+Test samples: 29658
+MAE:  334.0667
+RMSE: 462.0826
+MAPE: 3732.7944%
