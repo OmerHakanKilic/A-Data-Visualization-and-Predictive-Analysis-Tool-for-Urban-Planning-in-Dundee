@@ -1,5 +1,5 @@
 Model: bicycles
 Test samples: 29658
-MAE:  7.2466
-RMSE: 9.9096
-MAPE: 452.3951%
+MAE:  7.3616
+RMSE: 10.0128
+MAPE: 462.4401%

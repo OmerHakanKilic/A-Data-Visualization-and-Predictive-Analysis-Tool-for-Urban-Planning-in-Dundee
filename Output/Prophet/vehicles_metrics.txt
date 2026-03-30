@@ -1,5 +1,5 @@
 Model: vehicles
 Test samples: 29658
-MAE:  305.5361
-RMSE: 383.8520
-MAPE: 5226.5758%
+MAE:  305.6822
+RMSE: 384.0819
+MAPE: 5222.5457%

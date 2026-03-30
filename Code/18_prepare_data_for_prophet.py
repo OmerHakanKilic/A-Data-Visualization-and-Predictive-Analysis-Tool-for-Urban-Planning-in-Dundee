@@ -3,7 +3,7 @@ from datetime import datetime
 
 import pandas as pd
 
-INPUT_DATA_PATH = "../Data/Processed/09_data_encoded.csv"
+INPUT_DATA_PATH = "../Data/Processed/20_days_since_record.csv"
 SPLIT_DATE = datetime(2024, 8, 1)
 
 TARGETS = [
