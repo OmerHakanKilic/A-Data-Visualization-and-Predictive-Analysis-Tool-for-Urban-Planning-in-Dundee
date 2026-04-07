@@ -4,8 +4,9 @@ from datetime import datetime
 from glob import glob
 
 import joblib
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from prophet import Prophet
 from sklearn.metrics import mean_squared_error
@@ -44,6 +45,7 @@ def train_and_evaluate(train_path: str, test_path: str, model_name: str) -> floa
     joblib.dump(model, model_path)
 
     train_forecast = model.predict(train_prophet)
+    train_forecast["yhat"] = np.maximum(0, train_forecast["yhat"]).astype(int)
     train_df = train_df.copy()
     train_df["predicted"] = train_forecast["yhat"].values
 
@@ -55,6 +57,7 @@ def train_and_evaluate(train_path: str, test_path: str, model_name: str) -> floa
         test_prophet[col] = test_df[col]
 
     forecast = model.predict(test_prophet)
+    forecast["yhat"] = np.maximum(0, forecast["yhat"]).astype(int)
     test_df = test_df.copy()
     test_df["predicted"] = forecast["yhat"].values
 
@@ -76,10 +79,24 @@ def plot_prediction(train_df: pd.DataFrame, test_df: pd.DataFrame, model_name: s
     test_df = test_df.sort_values("ds")
 
     plt.figure(figsize=(12, 6))
-    plt.plot(train_df["ds"], train_df["y"], label="Train Actual", color="blue", alpha=0.7)
-    plt.plot(train_df["ds"], train_df["predicted"], label="Train Predicted", color="orange", alpha=0.7)
+    plt.plot(
+        train_df["ds"], train_df["y"], label="Train Actual", color="blue", alpha=0.7
+    )
+    plt.plot(
+        train_df["ds"],
+        train_df["predicted"],
+        label="Train Predicted",
+        color="orange",
+        alpha=0.7,
+    )
     plt.plot(test_df["ds"], test_df["y"], label="Test Actual", color="green", alpha=0.7)
-    plt.plot(test_df["ds"], test_df["predicted"], label="Test Predicted", color="red", alpha=0.7)
+    plt.plot(
+        test_df["ds"],
+        test_df["predicted"],
+        label="Test Predicted",
+        color="red",
+        alpha=0.7,
+    )
     plt.xlabel("Date")
     plt.ylabel("Value")
     plt.title(f"Predictions vs Actuals - {model_name}")
