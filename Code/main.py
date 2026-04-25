@@ -8,6 +8,7 @@ from PyQt6.QtGui import QColor, QPainter, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
+    QDateEdit,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -35,7 +36,7 @@ STATE = {
 }
 
 
-class MapPage(QWidget):
+class OverviewTab(QWidget):
     MAP_IMAGE_SIZE = int(885 / 3)
     sidebar_hidden = pyqtSignal()
 
@@ -356,9 +357,79 @@ class MapPage(QWidget):
 class MLPage(QWidget):
     def __init__(self):
         super().__init__()
-        layout = QVBoxLayout()
-        layout.addWidget(QLabel("ML Page"))
-        self.setLayout(layout)
+        main_layout = QVBoxLayout()
+        main_layout.setSpacing(15)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+
+        camera_label = QLabel("Camera:")
+        self.camera_dropdown = QComboBox()
+        self.camera_dropdown.addItems(
+            [
+                "308_murraygate",
+                "310_seagate",
+                "317_reform_st",
+                "320_westport",
+                "323_union_street",
+                "328_south_marketgate",
+                "332_waterfront",
+                "500_hilltown",
+            ]
+        )
+
+        target_label = QLabel("Target:")
+        self.target_dropdown = QComboBox()
+        self.target_dropdown.addItems(
+            [
+                "Number of People",
+                "Number of Vehicles",
+                "Number of Bicycles",
+            ]
+        )
+
+        date_label = QLabel("Date:")
+        self.date_picker = QDateEdit()
+        self.date_picker.setCalendarPopup(True)
+        self.date_picker.setDisplayFormat("yyyy-MM-dd")
+        self.date_picker.clear()
+
+        self.start_time_label = QLabel("Start Time: 0")
+        self.start_time_slider = QSlider()
+        self.start_time_slider.setMaximum(23)
+        self.start_time_slider.setMinimum(0)
+        self.start_time_slider.setOrientation(Qt.Orientation.Horizontal)
+        self.start_time_slider.valueChanged.connect(self.on_start_time_changed)
+
+        self.finish_time_label = QLabel("Finish Time: 23")
+        self.finish_time_slider = QSlider()
+        self.finish_time_slider.setMaximum(23)
+        self.finish_time_slider.setMinimum(0)
+        self.finish_time_slider.setValue(23)
+        self.finish_time_slider.setOrientation(Qt.Orientation.Horizontal)
+        self.finish_time_slider.valueChanged.connect(self.on_finish_time_changed)
+
+        self.predict_button = QPushButton("Predict")
+        self.predict_button.setFixedHeight(40)
+
+        main_layout.addWidget(camera_label)
+        main_layout.addWidget(self.camera_dropdown)
+        main_layout.addWidget(target_label)
+        main_layout.addWidget(self.target_dropdown)
+        main_layout.addWidget(date_label)
+        main_layout.addWidget(self.date_picker)
+        main_layout.addWidget(self.start_time_label)
+        main_layout.addWidget(self.start_time_slider)
+        main_layout.addWidget(self.finish_time_label)
+        main_layout.addWidget(self.finish_time_slider)
+        main_layout.addStretch()
+        main_layout.addWidget(self.predict_button)
+
+        self.setLayout(main_layout)
+
+    def on_start_time_changed(self, value):
+        self.start_time_label.setText(f"Start Time: {value}")
+
+    def on_finish_time_changed(self, value):
+        self.finish_time_label.setText(f"Finish Time: {value}")
 
 
 class MainWindow(QMainWindow):
@@ -372,30 +443,30 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
-        self.homeButton = QPushButton("Home Tab")
+        self.overviewTabButton = QPushButton("Home Tab")
         self.machineButton = QPushButton("Machine learning Tab")
 
-        self.mapPage = MapPage()
+        self.overviewPage = OverviewTab()
         self.mlpage = MLPage()
 
         self.stack.addWidget(self.mlpage)
-        self.stack.addWidget(self.mapPage)
+        self.stack.addWidget(self.overviewPage)
 
         self.stack.setCurrentIndex(1)
 
-        self.homeButton.clicked.connect(lambda: self.stack.setCurrentIndex(1))
+        self.overviewTabButton.clicked.connect(lambda: self.stack.setCurrentIndex(1))
         self.machineButton.clicked.connect(lambda: self.stack.setCurrentIndex(0))
 
         self.showSidebarBtn = QPushButton("☰", self)
         self.showSidebarBtn.setFixedSize(40, 40)
         self.showSidebarBtn.hide()
         self.showSidebarBtn.clicked.connect(self.on_show_sidebar_clicked)
-        self.mapPage.sidebar_hidden.connect(self.on_sidebar_hidden)
+        self.overviewPage.sidebar_hidden.connect(self.on_sidebar_hidden)
 
         masterLayout = QVBoxLayout()
 
         topBar = QHBoxLayout()
-        topBar.addWidget(self.homeButton)
+        topBar.addWidget(self.overviewTabButton)
         topBar.addWidget(self.machineButton)
 
         masterLayout.addLayout(topBar)
@@ -410,7 +481,7 @@ class MainWindow(QMainWindow):
         self.showSidebarBtn.setGeometry(5, 80, 40, 40)
 
     def on_show_sidebar_clicked(self):
-        self.mapPage.show_sidebar()
+        self.overviewPage.show_sidebar()
         self.showSidebarBtn.hide()
 
 
